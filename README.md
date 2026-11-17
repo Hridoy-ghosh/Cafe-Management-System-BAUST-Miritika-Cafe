@@ -18,24 +18,35 @@ Nexus project.
 
    The CLI may request the database password. Enter it only in the local
    terminal prompt; do not send it in chat or commit it.
-3. Apply the migration with `npx.cmd supabase db push`, or run
-   `supabase/migrations/20261010000100_cafe_management.sql` in the project's
-   SQL Editor.
+3. Apply **all** migrations to the dedicated project in timestamp order with
+   `npx.cmd supabase db push`, or run every SQL file in
+   `supabase/migrations/` in timestamp order in the project's SQL Editor.
+   Running only the initial migration is insufficient: later migrations add
+   the account status and role-request logic used by sign-up and sign-in.
 4. Copy `.env.example` to `.env`, then set `CAFE_SUPABASE_URL` and
    `CAFE_SUPABASE_ANON_KEY` to this project's Project URL and publishable (or
    legacy anon) key. Never use a `service_role` or secret key in Flutter.
-5. Create the cafe-admin account through Supabase Auth. In the SQL Editor,
-   promote that account using its Auth user UUID:
+5. Provision the cafe-admin account using the Supabase Auth Admin API or
+   Dashboard (never public sign-up). Use `cafeadmin@gmail.com` and set the
+   trusted **app metadata** value `{"cafe_role":"cafe_admin"}` when creating
+   the user. The Auth trigger grants the cafe-admin role only when this
+   server-managed metadata is present; public user metadata and matching an
+   email address alone cannot grant admin access. Set the password directly in
+   Supabase Auth; never put it in Flutter source or `.env`.
+
+   If the owner user already exists, promote it from the SQL Editor after
+   verifying its Auth UUID:
 
    ```sql
    update public.user_profiles
-   set role = 'cafe_admin', department = 'Cafe'
-   where id = 'AUTH_USER_UUID';
+   set role = 'cafe_admin', department = 'Cafe', status = 'approved'
+   where id = 'AUTH_USER_UUID'
+     and lower(email) = 'cafeadmin@gmail.com';
    ```
-
    The SQL Editor runs with project-owner privileges; customers cannot promote
-   their own accounts. Supabase email confirmation settings determine whether
-   customers need to confirm their email before signing in.
+   their own accounts. Public registration of the reserved owner email is
+   rejected. Email confirmation is disabled in the linked Supabase project so
+   regular customers can sign in immediately after account creation.
 6. Run `flutter pub get`, then `flutter run`.
 
 Until the dedicated project is configured, the app shows a setup screen rather
@@ -44,10 +55,15 @@ than connecting to the unrelated BAUST Nexus database.
 ## Current modules
 
 - Cafe customer sign-up and sign-in
-- Menu browsing, cart, and order placement
-- Cafe-admin order and menu screens
-- Cafe-admin inventory, low-stock visibility, suppliers, purchases, and stock
-  adjustments
+- Role requests for managers, cashiers, kitchen staff, waiters, suppliers, and
+  university authority, pending owner approval
+- Menu browsing, cart, persistent order placement, billing, order status, and
+  sales records
+- Cafe-admin menu, staff approval, shift scheduling, attendance, and feedback
+  management
+- Owner/manager inventory, low-stock visibility, suppliers, purchases, and
+  stock adjustments
+- Persistent light/dark theme preference
 
 Purchase recording and stock adjustments are database transactions implemented
 as Supabase RPC functions and protected by row-level security.

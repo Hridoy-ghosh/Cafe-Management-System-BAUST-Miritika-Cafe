@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title description">
+  <title id="title">BAUST Miritika Cafe project thumbnail</title>
+  <desc id="description">A mobile-first cafe ordering and management app for BAUST Miritika Cafe.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#101A31"/>
+      <stop offset="1" stop-color="#1D3151"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#F8FAF7"/>
+      <stop offset="1" stop-color="#EEF4EE"/>
+    </linearGradient>
+    <linearGradient id="coffee" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#E9B96B"/>
+      <stop offset="1" stop-color="#B87539"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-20%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="20" stdDeviation="22" flood-color="#07101E" flood-opacity=".28"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#background)"/>
+  <circle cx="1150" cy="30" r="290" fill="#324A65" opacity=".32"/>
+  <circle cx="40" cy="690" r="300" fill="#214641" opacity=".26"/>
+  <path d="M0 560C220 465 320 760 590 620s430-176 690-40v140H0Z" fill="#172944" opacity=".48"/>
+
+  <g fill="#D9E7D7" opacity=".16">
+    <circle cx="690" cy="90" r="4"/><circle cx="730" cy="124" r="3"/>
+    <circle cx="661" cy="149" r="3"/><circle cx="1184" cy="470" r="4"/>
+    <circle cx="1148" cy="510" r="3"/><circle cx="1095" cy="79" r="3"/>
+  </g>
+
+  <g font-family="Poppins, Segoe UI, Arial, sans-serif">
+    <g transform="translate(88 72)">
+      <rect width="58" height="58" rx="18" fill="#C5E7B8"/>
+      <path d="M17 25h24l-2 19H19Zm3-5c0-5 4-9 9-9s9 4 9 9M41 28h5a5 5 0 0 1 0 10h-6" fill="none" stroke="#173A34" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M26 30c2-3 5-3 7 0" fill="none" stroke="#173A34" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <text x="164" y="95" fill="#E8F0E7" font-size="16" font-weight="700" letter-spacing="2.4">BAUST</text>
+    <text x="164" y="119" fill="#AEBFBD" font-size="13" letter-spacing="1.6">MIRITIKA CAFE</text>
+
+    <rect x="88" y="191" width="188" height="34" rx="17" fill="#C5E7B8" opacity=".13" stroke="#C5E7B8" stroke-opacity=".35"/>
+    <circle cx="108" cy="208" r="4" fill="#C5E7B8"/>
+    <text x="122" y="213" fill="#D5E8CF" font-size="12" font-weight="600" letter-spacing="1.6">MOBILE CAFE SYSTEM</text>
+
+    <text x="84" y="310" fill="#FFFFFF" font-size="67" font-weight="700" letter-spacing="-2">Miritika</text>
+    <text x="88" y="365" fill="#D9E9D1" font-size="38" font-weight="500" letter-spacing=".5">Cafe, made simpler.</text>
+    <text x="90" y="420" fill="#B5C3CE" font-size="18">Order, serve, and manage — all in one place.</text>
+
+    <g transform="translate(88 475)">
+      <rect width="164" height="45" rx="13" fill="#FFFFFF" opacity=".08"/>
+      <circle cx="23" cy="22.5" r="11" fill="#C5E7B8" opacity=".2"/>
+      <path d="m18 23 4 4 7-9" fill="none" stroke="#D7EBCF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="43" y="28" fill="#E9F0EA" font-size="14" font-weight="500">Online ordering</text>
+
+      <rect x="176" width="154" height="45" rx="13" fill="#FFFFFF" opacity=".08"/>
+      <circle cx="199" cy="22.5" r="11" fill="#E9C07A" opacity=".22"/>
+      <path d="M194 26v-7m5 7v-11m5 11v-4" stroke="#F0CE94" stroke-width="2" stroke-linecap="round"/>
+      <text x="219" y="28" fill="#E9F0EA" font-size="14" font-weight="500">Live operations</text>
+
+      <rect y="58" width="178" height="45" rx="13" fill="#FFFFFF" opacity=".08"/>
+      <circle cx="23" cy="80.5" r="11" fill="#A8D8D0" opacity=".22"/>
+      <path d="M18 77h10v8H18zm2-3h6v3m-5 3h4" fill="none" stroke="#BFE5DB" stroke-width="1.8" stroke-linejoin="round"/>
+      <text x="43" y="86" fill="#E9F0EA" font-size="14" font-weight="500">Smart inventory</text>
+
+      <rect x="190" y="58" width="174" height="45" rx="13" fill="#FFFFFF" opacity=".08"/>
+      <circle cx="213" cy="80.5" r="11" fill="#E9C07A" opacity=".22"/>
+      <path d="M208 84v-6m5 6v-10m5 10v-4" stroke="#F0CE94" stroke-width="2" stroke-linecap="round"/>
+      <text x="233" y="86" fill="#E9F0EA" font-size="14" font-weight="500">Sales insights</text>
+    </g>
+
+    <text x="90" y="648" fill="#9EAFBE" font-size="13" letter-spacing="1.2">A BETTER CAMPUS CAFE EXPERIENCE</text>
+    <path d="M90 673h65" stroke="#C5E7B8" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <g filter="url(#shadow)" transform="rotate(5 936 365)">
+    <rect x="785" y="51" width="336" height="608" rx="42" fill="#0C1423" stroke="#52647A" stroke-width="2"/>
+    <rect x="796" y="63" width="314" height="584" rx="32" fill="url(#screen)"/>
+    <rect x="904" y="72" width="98" height="19" rx="10" fill="#0C1423"/>
+
+    <g font-family="Poppins, Segoe UI, Arial, sans-serif">
+      <text x="819" y="112" fill="#263544" font-size="11" font-weight="600">9:41</text>
+      <text x="1067" y="112" fill="#263544" font-size="10">●  ▰</text>
+      <text x="818" y="151" fill="#203044" font-size="18" font-weight="700">Good morning!</text>
+      <text x="818" y="173" fill="#75828C" font-size="11">What are you craving today?</text>
+      <circle cx="1070" cy="151" r="20" fill="#DCE9D6"/>
+      <path d="M1062 151h16m-8-8v16" stroke="#31533C" stroke-width="2" stroke-linecap="round"/>
+
+      <rect x="817" y="193" width="272" height="44" rx="13" fill="#FFFFFF" stroke="#E4E9E5"/>
+      <circle cx="837" cy="214" r="6" fill="none" stroke="#8A979E" stroke-width="1.8"/>
+      <path d="m842 219 5 5" stroke="#8A979E" stroke-width="1.8" stroke-linecap="round"/>
+      <text x="858" y="218" fill="#9AA5AA" font-size="11">Search your favorites</text>
+
+      <text x="818" y="270" fill="#263544" font-size="15" font-weight="700">Popular today</text>
+      <text x="1088" y="270" text-anchor="end" fill="#5A805D" font-size="10" font-weight="600">See all</text>
+
+      <rect x="817" y="284" width="130" height="159" rx="16" fill="#FFFFFF"/>
+      <rect x="826" y="293" width="112" height="83" rx="12" fill="#F2E9D8"/>
+      <ellipse cx="882" cy="351" rx="31" ry="12" fill="#D6C1A1"/>
+      <path d="M856 339c0-16 12-27 26-27s26 11 26 27v7h-52Z" fill="url(#coffee)"/>
+      <path d="M868 330c3-7 11-7 14 0m3-4c3-7 11-7 14 0" fill="none" stroke="#F6E5C5" stroke-width="2" stroke-linecap="round"/>
+      <text x="829" y="398" fill="#263544" font-size="12" font-weight="700">Cappuccino</text>
+      <text x="829" y="417" fill="#87939A" font-size="9">Freshly brewed</text>
+      <text x="829" y="434" fill="#456C49" font-size="11" font-weight="700">৳ 85</text>
+      <circle cx="925" cy="427" r="13" fill="#355B3D"/>
+      <path d="M920 427h10m-5-5v10" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+
+      <rect x="957" y="284" width="132" height="159" rx="16" fill="#FFFFFF"/>
+      <rect x="966" y="293" width="114" height="83" rx="12" fill="#F5E9D9"/>
+      <ellipse cx="1023" cy="352" rx="37" ry="12" fill="#DEC8A8"/>
+      <path d="m986 344 9-23q4-8 12-3l11 8 10-7q8-5 13 3l18 22q4 8-5 12h-64q-10-3-4-12Z" fill="#C57B47"/>
+      <path d="m1000 337 13-7m15 4 13 6" stroke="#F6DDB3" stroke-width="3" stroke-linecap="round"/>
+      <text x="968" y="398" fill="#263544" font-size="12" font-weight="700">Chicken roll</text>
+      <text x="968" y="417" fill="#87939A" font-size="9">Cafe favorite</text>
+      <text x="968" y="434" fill="#456C49" font-size="11" font-weight="700">৳ 55</text>
+      <circle cx="1067" cy="427" r="13" fill="#355B3D"/>
+      <path d="M1062 427h10m-5-5v10" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+
+      <text x="818" y="477" fill="#263544" font-size="15" font-weight="700">Your order</text>
+      <rect x="817" y="490" width="272" height="66" rx="14" fill="#FFFFFF"/>
+      <circle cx="849" cy="523" r="21" fill="#F2E9D8"/>
+      <path d="M838 520c0-8 5-13 11-13s11 5 11 13v5h-22Z" fill="#A76C3D"/>
+      <path d="M847 511c3-5 7-4 9 0" fill="none" stroke="#F5E4C6" stroke-width="1.5"/>
+      <text x="881" y="519" fill="#263544" font-size="11" font-weight="600">Milk tea × 2</text>
+      <text x="881" y="538" fill="#8B979D" font-size="9">Ready in 8–10 min</text>
+      <text x="1074" y="525" text-anchor="end" fill="#263544" font-size="11" font-weight="700">৳ 20</text>
+
+      <rect x="817" y="570" width="272" height="48" rx="14" fill="#355B3D"/>
+      <text x="953" y="600" text-anchor="middle" fill="#FFFFFF" font-size="13" font-weight="700">View cart  ·  ৳ 140</text>
+
+      <path d="M817 630h272" stroke="#E3E9E4"/>
+      <circle cx="855" cy="637" r="3" fill="#355B3D"/>
+      <circle cx="953" cy="637" r="3" fill="#B6C0BA"/>
+      <circle cx="1051" cy="637" r="3" fill="#B6C0BA"/>
+    </g>
+  </g>
+
+  <g filter="url(#shadow)" transform="rotate(-7 1043 553)">
+    <rect x="1032" y="487" width="180" height="102" rx="18" fill="#FFFFFF"/>
+    <circle cx="1061" cy="519" r="15" fill="#E6F0E2"/>
+    <path d="M1055 519h12m-6-6v12" stroke="#42694A" stroke-width="2" stroke-linecap="round"/>
+    <text x="1085" y="517" fill="#859198" font-family="Poppins, Segoe UI, Arial, sans-serif" font-size="9" font-weight="600" letter-spacing=".8">TODAY'S ORDERS</text>
+    <text x="1051" y="560" fill="#203044" font-family="Poppins, Segoe UI, Arial, sans-serif" font-size="25" font-weight="700">186</text>
+    <rect x="1099" y="541" width="89" height="25" rx="12" fill="#EDF5EA"/>
+    <path d="m1111 554 5-5 4 3 7-8" fill="none" stroke="#4E8153" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="1132" y="557" fill="#4E8153" font-family="Poppins, Segoe UI, Arial, sans-serif" font-size="9" font-weight="700">LIVE</text>
+  </g>
+</svg>

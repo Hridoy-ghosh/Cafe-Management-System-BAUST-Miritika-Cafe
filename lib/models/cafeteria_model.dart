@@ -46,6 +46,8 @@ class CafeteriaOrder {
   final List<Map<String, dynamic>> items;
   final double totalAmount;
   final String paymentMethod;
+  final String paymentChannel;
+  final String paymentStatus;
   final String status;
   final DateTime orderTime;
   final String token;
@@ -65,6 +67,8 @@ class CafeteriaOrder {
     required this.items,
     required this.totalAmount,
     required this.paymentMethod,
+    this.paymentChannel = 'cash',
+    this.paymentStatus = 'unpaid',
     required this.status,
     required this.orderTime,
     required this.token,
@@ -86,6 +90,8 @@ class CafeteriaOrder {
       items: List<Map<String, dynamic>>.from(data['items'] ?? []),
       totalAmount: (data['totalAmount'] ?? 0).toDouble(),
       paymentMethod: data['paymentMethod'] ?? 'cash',
+      paymentChannel: data['paymentChannel'] ?? 'cash',
+      paymentStatus: data['paymentStatus'] ?? 'unpaid',
       status: data['status'] ?? 'pending',
       orderTime: _parseOrderTime(data['orderTime']),
       token: data['token'] ?? '',
@@ -107,6 +113,8 @@ class CafeteriaOrder {
       'items': items,
       'totalAmount': totalAmount,
       'paymentMethod': paymentMethod,
+      'paymentChannel': paymentChannel,
+      'paymentStatus': paymentStatus,
       'status': status,
       'orderTime': orderTime.toIso8601String(),
       'token': token,

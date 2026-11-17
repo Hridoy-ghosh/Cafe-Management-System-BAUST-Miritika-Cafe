@@ -3,7 +3,7 @@ class UserModel {
   final String name;
   final String email;
   final String password;
-  final String role; // student, teacher, admin
+  final String role;
   final String status; // pending, approved, rejected
   final String? studentId;
   final String? teacherId;
@@ -48,4 +48,7 @@ class UserModel {
   bool get isStudent => role == 'student';
   bool get isTeacher => role == 'teacher';
   bool get isAdmin => role == 'admin' || role == 'cafe_admin';
+  bool get isCafeStaff =>
+      const {'cafe_admin', 'manager', 'cashier', 'chef', 'waiter'}
+          .contains(role);
 }

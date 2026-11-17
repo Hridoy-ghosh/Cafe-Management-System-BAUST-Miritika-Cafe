@@ -5,6 +5,8 @@ import '../models/cafeteria_model.dart';
 import '../services/cafeteria_service.dart';
 import '../services/auth_service.dart';
 import '../config/app_colors.dart';
+import '../widgets/theme_mode_button.dart';
+import 'cafe_operations_screen.dart';
 import 'inventory_management_screen.dart';
 
 class CafeAdminPanel extends StatefulWidget {
@@ -33,8 +35,12 @@ class _CafeAdminPanelState extends State<CafeAdminPanel> {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthService>(context).currentUser;
+    final theme = Theme.of(context);
+    final isOwner = user?.role == 'cafe_admin' &&
+        user?.department == 'Cafe' &&
+        user?.status == 'approved';
 
-    if (user?.role != 'cafe_admin' || user?.department != 'Cafe') {
+    if (user == null || !user.isCafeStaff || user.status != 'approved') {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Access Denied'),
@@ -48,7 +54,7 @@ class _CafeAdminPanelState extends State<CafeAdminPanel> {
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
             const Icon(Icons.lock, size: 80, color: Colors.grey),
             const SizedBox(height: 16),
-            const Text('Only Cafe Admin can access this panel'),
+            const Text('This staff account is not approved for cafe access.'),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
@@ -61,16 +67,22 @@ class _CafeAdminPanelState extends State<CafeAdminPanel> {
 
     if (_selectedIndex != -1) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF5F6FA),
         appBar: AppBar(
-          title: Text(
-            _selectedIndex == 0
-                ? 'Cafeteria Management'
-                : 'Inventory Management',
-            style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold, color: Colors.white, fontSize: 20),
+          title: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              switch (_selectedIndex) {
+                0 => 'Cafeteria Management',
+                1 => 'Inventory Management',
+                _ => 'Staff & Cafe Operations',
+              },
+              style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontSize: 20),
+            ),
           ),
-          backgroundColor: const Color(0xFF1A237E),
+          backgroundColor: theme.appBarTheme.backgroundColor,
           centerTitle: true,
           elevation: 0,
           leading: IconButton(
@@ -78,119 +90,149 @@ class _CafeAdminPanelState extends State<CafeAdminPanel> {
             onPressed: _goBack,
           ),
           actions: [
+            const ThemeModeButton(color: Colors.white),
             IconButton(
               icon: const Icon(Icons.logout, color: Colors.white),
               onPressed: _logout,
             ),
           ],
         ),
-        body: _selectedIndex == 0
-            ? const CafeManagementScreenContent()
-            : const InventoryManagementScreen(),
+        body: switch (_selectedIndex) {
+          0 => const CafeManagementScreenContent(),
+          1 => const InventoryManagementScreen(embedded: true),
+          _ => const CafeOperationsScreen(embedded: true),
+        },
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         title: Text(
-          'Cafeteria Admin Panel',
+          isOwner
+              ? 'Cafe Owner Dashboard'
+              : '${user.role.toUpperCase()} Dashboard',
           style: GoogleFonts.poppins(
               fontWeight: FontWeight.bold, color: Colors.white, fontSize: 20),
         ),
-        backgroundColor: const Color(0xFF1A237E),
+        backgroundColor: theme.appBarTheme.backgroundColor,
         centerTitle: true,
         elevation: 0,
         actions: [
+          const ThemeModeButton(color: Colors.white),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: _logout,
           ),
         ],
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 20),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1A237E), Color(0xFF3949AB)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 55,
-                  height: 55,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: const Icon(Icons.admin_panel_settings,
-                      size: 30, color: Color(0xFF1A237E)),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1A237E), Color(0xFF3949AB)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome,',
-                        style: GoogleFonts.poppins(
-                            fontSize: 14, color: Colors.white70),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 55,
+                    height: 55,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: const Icon(Icons.admin_panel_settings,
+                        size: 30, color: Color(0xFF1A237E)),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Welcome,',
+                          style: GoogleFonts.poppins(
+                              fontSize: 14, color: Colors.white70),
+                        ),
+                        Text(
+                          user.name,
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          isOwner
+                              ? 'OWNER • BAUST MIRITIKA CAFE'
+                              : user.role.toUpperCase(),
+                          style: GoogleFonts.poppins(
+                              fontSize: 12, color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
+            if (user.isCafeStaff)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildServiceCard(
+                        icon: Icons.restaurant,
+                        title: 'Cafeteria',
+                        subtitle: 'Orders, kitchen, billing, sales',
+                        color: const Color(0xFF2196F3),
+                        onTap: () => setState(() => _selectedIndex = 0),
                       ),
-                      Text(
-                        user?.name ?? 'Cafe Admin',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                    ),
+                    if (isOwner || user.role == 'manager') ...[
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildServiceCard(
+                          icon: Icons.inventory_2,
+                          title: 'Inventory',
+                          subtitle: 'Stock & suppliers',
+                          color: const Color(0xFF4CAF50),
+                          onTap: () => setState(() => _selectedIndex = 1),
                         ),
                       ),
-                      Text(
-                        'ADMIN • CAFETERIA',
-                        style: GoogleFonts.poppins(
-                            fontSize: 12, color: Colors.white70),
-                      ),
                     ],
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 30),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildServiceCard(
-                    icon: Icons.restaurant,
-                    title: 'Cafeteria',
-                    subtitle: 'Management',
-                    color: const Color(0xFF2196F3),
-                    onTap: () => setState(() => _selectedIndex = 0),
-                  ),
+              ),
+            if (isOwner)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildServiceCard(
+                        icon: Icons.badge_outlined,
+                        title: 'Staff & Operations',
+                        subtitle: 'Roles, shifts, attendance, feedback',
+                        color: const Color(0xFF8E24AA),
+                        onTap: () => setState(() => _selectedIndex = 2),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildServiceCard(
-                    icon: Icons.inventory_2,
-                    title: 'Inventory',
-                    subtitle: 'Stock & suppliers',
-                    color: const Color(0xFF4CAF50),
-                    onTap: () => setState(() => _selectedIndex = 1),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+              ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }
@@ -207,7 +249,7 @@ class _CafeAdminPanelState extends State<CafeAdminPanel> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -216,7 +258,10 @@ class _CafeAdminPanelState extends State<CafeAdminPanel> {
               offset: const Offset(0, 6),
             ),
           ],
-          border: Border.all(color: Colors.grey.shade200, width: 1.5),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+            width: 1.5,
+          ),
         ),
         child: Column(
           children: [
@@ -234,7 +279,7 @@ class _CafeAdminPanelState extends State<CafeAdminPanel> {
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF1A237E),
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: 4),
@@ -242,7 +287,7 @@ class _CafeAdminPanelState extends State<CafeAdminPanel> {
               subtitle,
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: Colors.grey.shade600,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -319,8 +364,11 @@ class _CafeManagementScreenContentState
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF1A237E);
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(50),
         child: AppBar(
@@ -367,6 +415,8 @@ class _CafeManagementScreenContentState
 
   // ==================== DASHBOARD TAB ====================
   Widget _buildDashboardTab(List<CafeteriaOrder> orders, Color primaryColor) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final today = DateTime.now();
 
     final todayOrders = orders
@@ -567,10 +617,13 @@ class _CafeManagementScreenContentState
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
-                BoxShadow(color: Colors.grey.shade200, blurRadius: 8)
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.08),
+                  blurRadius: 8,
+                )
               ],
             ),
             child: Column(
@@ -627,10 +680,14 @@ class _CafeManagementScreenContentState
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
-                      BoxShadow(color: Colors.grey.shade200, blurRadius: 6)
+                      BoxShadow(
+                        color: Colors.black
+                            .withValues(alpha: isDark ? 0.12 : 0.08),
+                        blurRadius: 6,
+                      )
                     ],
                   ),
                   child: Column(
@@ -658,10 +715,14 @@ class _CafeManagementScreenContentState
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
-                      BoxShadow(color: Colors.grey.shade200, blurRadius: 6)
+                      BoxShadow(
+                        color: Colors.black
+                            .withValues(alpha: isDark ? 0.12 : 0.08),
+                        blurRadius: 6,
+                      )
                     ],
                   ),
                   child: Column(
@@ -694,10 +755,13 @@ class _CafeManagementScreenContentState
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
-                BoxShadow(color: Colors.grey.shade200, blurRadius: 8)
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.08),
+                  blurRadius: 8,
+                )
               ],
             ),
             child: Column(
@@ -722,7 +786,7 @@ class _CafeManagementScreenContentState
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
+                              color: theme.colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
@@ -772,10 +836,13 @@ class _CafeManagementScreenContentState
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
-                BoxShadow(color: Colors.grey.shade200, blurRadius: 8)
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.08),
+                  blurRadius: 8,
+                )
               ],
             ),
             child: Column(
@@ -1084,6 +1151,8 @@ class _CafeManagementScreenContentState
 
   // ==================== EDIT MENU TAB ====================
   Widget _buildEditMenuTab(Color primaryColor) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final TextEditingController _itemNameCtrl = TextEditingController();
     final TextEditingController _itemPriceCtrl = TextEditingController();
     String _selectedCategory = 'Snacks';
@@ -1146,9 +1215,14 @@ class _CafeManagementScreenContentState
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 8)],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.08),
+                blurRadius: 8,
+              ),
+            ],
           ),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

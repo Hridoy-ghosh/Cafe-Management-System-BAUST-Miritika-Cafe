@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
 import '../config/app_colors.dart';
 import '../config/app_constants.dart';
+import '../widgets/theme_mode_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -69,12 +70,21 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    if (user.isCafeStaff) {
+      Navigator.pushReplacementNamed(context, '/cafe_admin');
+      return;
+    }
+
+    if (user.role == 'supplier' || user.role == 'university_authority') {
+      Navigator.pushReplacementNamed(context, '/cafeteria');
+      return;
+    }
+
     await authService.signOut();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content:
-            Text('Only BAUST Miritika Cafe admins can access the admin panel.'),
+        content: Text('This account does not have cafe access.'),
         backgroundColor: AppColors.error,
       ),
     );
@@ -82,13 +92,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = theme.colorScheme.onSurface;
+    final accentColor = theme.colorScheme.primary;
+
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF1A237E), Color(0xFF283593), Color(0xFF3949AB)],
+            colors: isDark
+                ? const [
+                    Color(0xFF0D1117),
+                    Color(0xFF141C2B),
+                    Color(0xFF202B43),
+                  ]
+                : const [
+                    Color(0xFF1A237E),
+                    Color(0xFF283593),
+                    Color(0xFF3949AB),
+                  ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -101,19 +126,23 @@ class _LoginScreenState extends State<LoginScreen> {
               key: _formKey,
               child: Column(
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      tooltip: 'Back to cafe',
-                      onPressed: () {
-                        if (Navigator.of(context).canPop()) {
-                          Navigator.pop(context);
-                        } else {
-                          Navigator.pushReplacementNamed(context, '/cafeteria');
-                        }
-                      },
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        tooltip: 'Back to cafe',
+                        onPressed: () {
+                          if (Navigator.of(context).canPop()) {
+                            Navigator.pop(context);
+                          } else {
+                            Navigator.pushReplacementNamed(
+                                context, '/cafeteria');
+                          }
+                        },
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      ),
+                      const ThemeModeButton(color: Colors.white),
+                    ],
                   ),
                   const SizedBox(height: 12),
 
@@ -122,11 +151,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: 90,
                     height: 90,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(25),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: Colors.black.withValues(alpha: 0.2),
                           blurRadius: 15,
                           offset: const Offset(0, 5),
                         ),
@@ -135,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Icon(
                       Icons.restaurant,
                       size: 50,
-                      color: Color(0xFF1A237E),
+                      color: AppColors.primary,
                     ),
                   ),
 
@@ -170,11 +199,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.12),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -189,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: textColor,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -199,21 +228,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           decoration: InputDecoration(
                             hintText: 'Enter your email',
                             prefixIcon: const Icon(Icons.email_outlined),
-                            filled: true,
-                            fillColor: Colors.grey.shade50,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(color: theme.dividerColor),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                  color: AppColors.primary, width: 2),
+                              borderSide:
+                                  BorderSide(color: accentColor, width: 2),
                             ),
                           ),
                           validator: (value) {
@@ -235,7 +261,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: textColor,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -258,21 +284,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                 });
                               },
                             ),
-                            filled: true,
-                            fillColor: Colors.grey.shade50,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(color: theme.dividerColor),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                  color: AppColors.primary, width: 2),
+                              borderSide:
+                                  BorderSide(color: accentColor, width: 2),
                             ),
                           ),
                           validator: (value) {
@@ -307,7 +330,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             Text(
                               'Remember me',
                               style: GoogleFonts.poppins(
-                                  fontSize: 13, color: Colors.grey),
+                                fontSize: 13,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
                             const Spacer(),
                             TextButton(
@@ -330,7 +355,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
+                                  color: accentColor,
                                 ),
                               ),
                             ),
@@ -348,19 +373,19 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: ElevatedButton(
                                 onPressed: auth.isLoading ? null : _handleLogin,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  elevation: 4,
+                                  backgroundColor: theme.colorScheme.primary,
+                                  foregroundColor: theme.colorScheme.onPrimary,
+                                  elevation: isDark ? 0 : 4,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                 ),
                                 child: auth.isLoading
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 24,
                                         height: 24,
                                         child: CircularProgressIndicator(
-                                          color: Colors.white,
+                                          color: theme.colorScheme.onPrimary,
                                           strokeWidth: 2,
                                         ),
                                       )
@@ -369,7 +394,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         style: GoogleFonts.poppins(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
-                                          color: Colors.white,
+                                          color: theme.colorScheme.onPrimary,
                                         ),
                                       ),
                               ),
@@ -387,7 +412,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
+                                color: accentColor,
                               ),
                             ),
                           ),
@@ -402,7 +427,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     '© 2026 BAUST. All rights reserved.',
                     style: GoogleFonts.poppins(
-                        fontSize: 11, color: Colors.white54),
+                        fontSize: 11, color: Colors.white70),
                   ),
                 ],
               ),

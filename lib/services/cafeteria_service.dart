@@ -1,131 +1,176 @@
 import 'dart:async';
+
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/cafeteria_model.dart';
 
 class CafeteriaService {
-  static final List<CafeteriaOrder> _orders = [];
-  static final StreamController<List<CafeteriaOrder>> _ordersController = StreamController<List<CafeteriaOrder>>.broadcast();
+  static final SupabaseClient _db = Supabase.instance.client;
+  static List<CafeteriaOrder> _cachedOrders = [];
 
-  static Stream<List<CafeteriaOrder>> streamAllOrders() {
+  static Stream<List<CafeteriaOrder>> streamAllOrders() => _orderStream();
+
+  static Stream<List<CafeteriaOrder>> streamOrdersByUser(String userId) =>
+      _orderStream(userId: userId);
+
+  static Stream<List<CafeteriaOrder>> _orderStream({String? userId}) {
     return Stream<List<CafeteriaOrder>>.multi((controller) {
-      controller.add(List.unmodifiable(_orders));
-      final subscription = _ordersController.stream.listen(controller.add);
-      controller.onCancel = subscription.cancel;
+      Future<void> emit() async {
+        try {
+          final rows = userId == null
+              ? await _db
+                  .from('cafe_orders')
+                  .select()
+                  .order('created_at', ascending: false)
+              : await _db
+                  .from('cafe_orders')
+                  .select()
+                  .eq('user_id', userId)
+                  .order('created_at', ascending: false);
+          final orders = List<Map<String, dynamic>>.from(rows)
+              .map((row) => CafeteriaOrder.fromMap(
+                    _fromDatabase(row),
+                    row['id'].toString(),
+                  ))
+              .toList(growable: false);
+          if (userId == null) _cachedOrders = orders;
+          controller.add(orders);
+        } catch (error, stackTrace) {
+          controller.addError(error, stackTrace);
+        }
+      }
+
+      unawaited(emit());
+      final timer = Timer.periodic(const Duration(seconds: 4), (_) => emit());
+      controller.onCancel = timer.cancel;
     });
   }
 
-  static Stream<List<CafeteriaOrder>> streamOrdersByUser(String userId) {
-    return Stream<List<CafeteriaOrder>>.multi((controller) {
-      controller.add(_orders.where((o) => o.userId == userId).toList());
-      final subscription = _ordersController.stream.listen((orders) {
-        controller.add(orders.where((o) => o.userId == userId).toList());
-      });
-      controller.onCancel = subscription.cancel;
-    });
-  }
+  static Map<String, dynamic> _fromDatabase(Map<String, dynamic> row) => {
+        'id': row['id'],
+        'userId': row['user_id'],
+        'userName': row['user_name'],
+        'userDept': row['user_department'],
+        'userPhone': row['user_phone'],
+        'items': row['items'],
+        'totalAmount': row['total_amount'],
+        'paymentMethod': row['order_type'],
+        'paymentChannel': row['payment_method'],
+        'paymentStatus': row['payment_status'],
+        'status': row['status'],
+        'orderTime': row['created_at'],
+        'token': row['token'],
+        'transactionId': row['payment_reference'],
+        if (row['payment_method'] == 'bkash')
+          'bkashNumber': row['payment_number'],
+        if (row['payment_method'] == 'nagad')
+          'nagadNumber': row['payment_number'],
+        'tableNumber': row['table_number'],
+        'floor': row['floor'],
+        'deliveredTime': row['delivered_at'],
+      };
 
   static Future<void> addOrder(CafeteriaOrder order) async {
-    _orders.insert(0, order);
-    _ordersController.add(List.unmodifiable(_orders));
+    final orderItems = order.items
+        .map((item) => {
+              'id': item['id'].toString(),
+              'quantity': item['quantity'],
+            })
+        .toList(growable: false);
+    await _db.rpc('place_cafe_order', params: {
+      'p_items': orderItems,
+      'p_order_type': order.paymentMethod,
+      'p_payment_method': order.paymentChannel,
+      'p_token': order.token,
+      'p_table_number': order.tableNumber,
+      'p_floor': order.floor,
+      'p_payment_reference': order.transactionId,
+      'p_payment_number': order.paymentChannel == 'bkash'
+          ? order.bkashNumber
+          : order.paymentChannel == 'nagad'
+              ? order.nagadNumber
+              : null,
+    });
   }
 
-  static void updateOrderStatus(String orderId, String newStatus) {
-    final index = _orders.indexWhere((order) => order.id == orderId);
-    if (index == -1) return;
-    final order = _orders[index];
-    
-    final deliveredTime = newStatus == 'delivered' ? DateTime.now() : order.deliveredTime;
-    
-    _orders[index] = CafeteriaOrder(
-      id: order.id,
-      userId: order.userId,
-      userName: order.userName,
-      userDept: order.userDept,
-      userPhone: order.userPhone,
-      items: order.items,
-      totalAmount: order.totalAmount,
-      paymentMethod: order.paymentMethod,
-      status: newStatus,
-      orderTime: order.orderTime,
-      token: order.token,
-      bkashNumber: order.bkashNumber,
-      nagadNumber: order.nagadNumber,
-      transactionId: order.transactionId,
-      tableNumber: order.tableNumber,
-      floor: order.floor,
-      deliveredTime: deliveredTime,
-    );
-    _ordersController.add(List.unmodifiable(_orders));
-  }
-
-  // টেবিল বুকড কিনা চেক করুন (pending এবং delivered উভয়ই চেক করবে)
-  static bool isTableBooked(String floor, String tableNumber) {
-    // pending অর্ডার চেক করুন
-    final pendingOrders = _orders.where((order) => 
-      order.status == 'pending' &&
-      order.tableNumber == tableNumber &&
-      order.floor == floor
-    ).toList();
-    
-    if (pendingOrders.isNotEmpty) {
-      return true;
+  static Future<void> updateOrderStatus(
+    String orderId,
+    String newStatus,
+  ) async {
+    final updates = <String, dynamic>{'status': newStatus};
+    if (newStatus == 'delivered') {
+      updates['delivered_at'] = DateTime.now().toUtc().toIso8601String();
     }
-    
-    // delivered অর্ডার চেক করুন (শেষ 30 মিনিটের মধ্যে)
-    final now = DateTime.now();
-    final recentDeliveries = _orders.where((order) => 
-      order.status == 'delivered' &&
-      order.tableNumber == tableNumber &&
-      order.floor == floor &&
-      order.deliveredTime != null &&
-      now.difference(order.deliveredTime!).inMinutes < 30
-    ).toList();
-    
-    return recentDeliveries.isNotEmpty;
+    await _db.from('cafe_orders').update(updates).eq('id', orderId);
   }
 
-  // available tables লিস্ট পাওয়া
-  static List<String> getAvailableTables(String floor, List<String> allTables) {
+  static Future<void> updatePaymentStatus(
+    String orderId,
+    String paymentStatus,
+  ) async {
+    await _db
+        .from('cafe_orders')
+        .update({'payment_status': paymentStatus}).eq('id', orderId);
+  }
+
+  static Future<void> deleteOrder(String orderId) async {
+    await _db.from('cafe_orders').delete().eq('id', orderId);
+  }
+
+  static bool isTableBooked(String floor, String tableNumber) {
     final now = DateTime.now();
-    
-    final busyTables = _orders.where((order) => 
-      order.floor == floor &&
-      order.tableNumber != null &&
-      (
-        order.status == 'pending' ||
-        (order.status == 'delivered' && 
-         order.deliveredTime != null &&
-         now.difference(order.deliveredTime!).inMinutes < 30)
-      )
-    ).map((o) => o.tableNumber).toSet();
-    
+    return _cachedOrders.any((order) =>
+        order.tableNumber == tableNumber &&
+        order.floor == floor &&
+        (order.status == 'pending' ||
+            order.status == 'preparing' ||
+            order.status == 'ready' ||
+            (order.status == 'delivered' &&
+                order.deliveredTime != null &&
+                now.difference(order.deliveredTime!).inMinutes < 30)));
+  }
+
+  static List<String> getAvailableTables(String floor, List<String> allTables) {
+    final busyTables = _cachedOrders
+        .where((order) =>
+            order.floor == floor &&
+            order.tableNumber != null &&
+            (order.status == 'pending' ||
+                order.status == 'preparing' ||
+                order.status == 'ready' ||
+                (order.status == 'delivered' &&
+                    order.deliveredTime != null &&
+                    DateTime.now().difference(order.deliveredTime!).inMinutes <
+                        30)))
+        .map((order) => order.tableNumber)
+        .toSet();
     return allTables.where((table) => !busyTables.contains(table)).toList();
   }
 
-  static double calculateTotalRevenue(List<CafeteriaOrder> orders) {
-    return orders
-        .where((o) => o.status == 'delivered')
-        .fold(0.0, (sum, o) => sum + o.totalAmount);
-  }
+  static double calculateTotalRevenue(List<CafeteriaOrder> orders) => orders
+      .where((order) => order.status == 'delivered')
+      .fold(0, (sum, order) => sum + order.totalAmount);
 
   static double calculateTodayRevenue(List<CafeteriaOrder> orders) {
     final today = DateTime.now();
-    return orders.where((o) =>
-        o.status == 'delivered' &&
-        o.orderTime.year == today.year &&
-        o.orderTime.month == today.month &&
-        o.orderTime.day == today.day
-    ).fold(0.0, (sum, o) => sum + o.totalAmount);
+    return orders
+        .where((order) =>
+            order.status == 'delivered' &&
+            order.orderTime.year == today.year &&
+            order.orderTime.month == today.month &&
+            order.orderTime.day == today.day)
+        .fold(0, (sum, order) => sum + order.totalAmount);
   }
 
-  static Map<String, int> calculateItemSalesCount(List<CafeteriaOrder> orders) {
-    final Map<String, int> sales = {};
-    for (var order in orders) {
-      if (order.status == 'delivered') {
-        for (var item in order.items) {
-          final name = item['name'] as String;
-          final qty = item['quantity'] as int;
-          sales[name] = (sales[name] ?? 0) + qty;
-        }
+  static Map<String, int> calculateItemSalesCount(
+    List<CafeteriaOrder> orders,
+  ) {
+    final sales = <String, int>{};
+    for (final order in orders.where((item) => item.status == 'delivered')) {
+      for (final item in order.items) {
+        final name = item['name'] as String;
+        final quantity = item['quantity'] as int;
+        sales[name] = (sales[name] ?? 0) + quantity;
       }
     }
     return sales;

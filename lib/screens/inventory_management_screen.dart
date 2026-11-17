@@ -5,7 +5,9 @@ import '../config/app_colors.dart';
 import '../services/inventory_service.dart';
 
 class InventoryManagementScreen extends StatefulWidget {
-  const InventoryManagementScreen({super.key});
+  const InventoryManagementScreen({super.key, this.embedded = false});
+
+  final bool embedded;
 
   @override
   State<InventoryManagementScreen> createState() =>
@@ -70,31 +72,51 @@ class _InventoryManagementScreenState extends State<InventoryManagementScreen>
 
   @override
   Widget build(BuildContext context) {
+    final tabs = TabBar(
+      controller: _tabController,
+      isScrollable: true,
+      tabs: const [
+        Tab(icon: Icon(Icons.inventory_2_outlined), text: 'Stock'),
+        Tab(icon: Icon(Icons.local_shipping_outlined), text: 'Suppliers'),
+        Tab(icon: Icon(Icons.receipt_long_outlined), text: 'Purchases'),
+      ],
+    );
+    final tabView = TabBarView(
+      controller: _tabController,
+      children: [
+        _buildItems(),
+        _buildSuppliers(),
+        _buildPurchases(),
+      ],
+    );
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          'Inventory & Purchasing',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabs: const [
-            Tab(icon: Icon(Icons.inventory_2_outlined), text: 'Stock'),
-            Tab(icon: Icon(Icons.local_shipping_outlined), text: 'Suppliers'),
-            Tab(icon: Icon(Icons.receipt_long_outlined), text: 'Purchases'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildItems(),
-          _buildSuppliers(),
-          _buildPurchases(),
-        ],
-      ),
+      appBar: widget.embedded
+          ? null
+          : AppBar(
+              title: Text(
+                'Inventory & Purchasing',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+              ),
+              bottom: tabs,
+            ),
+      body: widget.embedded
+          ? Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: tabs),
+                    IconButton(
+                      tooltip: 'Refresh',
+                      onPressed: () => setState(_reload),
+                      icon: const Icon(Icons.refresh),
+                    ),
+                  ],
+                ),
+                Expanded(child: tabView),
+              ],
+            )
+          : tabView,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addForSelectedTab,
         icon: const Icon(Icons.add),

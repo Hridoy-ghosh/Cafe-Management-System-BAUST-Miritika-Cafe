@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../config/app_colors.dart';
 import '../config/app_constants.dart';
 import '../services/auth_service.dart';
+import '../widgets/theme_mode_button.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -22,6 +23,21 @@ class _SignupScreenState extends State<SignupScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmation = true;
+  String _selectedRole = 'customer';
+
+  static const _roles = <String, String>{
+    'customer': 'Customer / Student',
+    'manager': 'Manager',
+    'cashier': 'Cashier',
+    'chef': 'Chef / Kitchen Staff',
+    'waiter': 'Waiter / Service Staff',
+    'supplier': 'Supplier',
+    'university_authority': 'University Authority',
+    'cafe_admin': 'Cafe Owner / Management',
+  };
+
+  bool get _isOwnerEmail =>
+      _emailController.text.trim().toLowerCase() == 'cafeadmin@gmail.com';
 
   @override
   void dispose() {
@@ -36,11 +52,24 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _createAccount() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (_isOwnerEmail) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'The Cafe Owner account must be provisioned securely by the project owner. Sign in after setup.',
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     final auth = context.read<AuthService>();
-    await auth.signUpCafeCustomer(
+    final emailConfirmationRequired = await auth.signUpCafeCustomer(
       name: _nameController.text.trim(),
       email: _emailController.text.trim(),
       password: _passwordController.text,
+      requestedRole: _selectedRole,
       phoneNumber: _phoneController.text.trim().isEmpty
           ? null
           : _phoneController.text.trim(),
@@ -56,9 +85,37 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
+    if (auth.currentUser != null) {
+      final user = auth.currentUser!;
+      if (user.status != 'approved') {
+        await auth.signOut();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Account request submitted. Sign in after Cafe Owner approval.',
+            ),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        Navigator.pushReplacementNamed(context, '/login');
+        return;
+      }
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        user.role == 'cafe_admin' ? '/cafe_admin' : '/cafeteria',
+        (route) => false,
+      );
+      return;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Customer account created. Please sign in.'),
+      SnackBar(
+        content: Text(
+          emailConfirmationRequired
+              ? 'Account created. Confirm your email before signing in.'
+              : 'Customer account created. Please sign in.',
+        ),
         backgroundColor: AppColors.success,
       ),
     );
@@ -67,13 +124,15 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         title: Text(
           'Create Customer Account',
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
+        actions: const [ThemeModeButton()],
       ),
       body: SafeArea(
         child: Center(
@@ -93,10 +152,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.restaurant,
                           size: 48,
-                          color: AppColors.primary,
+                          color: theme.colorScheme.primary,
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -125,6 +184,14 @@ class _SignupScreenState extends State<SignupScreen> {
                           hint: 'Enter your email',
                           icon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
+                          onChanged: (_) {
+                            if (!_isOwnerEmail &&
+                                _selectedRole == 'cafe_admin') {
+                              setState(() => _selectedRole = 'customer');
+                            } else {
+                              setState(() {});
+                            }
+                          },
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'Please enter your email';
@@ -143,6 +210,42 @@ class _SignupScreenState extends State<SignupScreen> {
                           icon: Icons.phone_outlined,
                           keyboardType: TextInputType.phone,
                         ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          value: _selectedRole,
+                          decoration: const InputDecoration(
+                            labelText: 'Select your role',
+                            prefixIcon: Icon(Icons.badge_outlined),
+                            border: OutlineInputBorder(),
+                          ),
+                          items: _roles.entries
+                              .where((entry) =>
+                                  entry.key != 'cafe_admin' || _isOwnerEmail)
+                              .map(
+                                (entry) => DropdownMenuItem(
+                                  value: entry.key,
+                                  child: Text(entry.value),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (role) {
+                            if (role != null) {
+                              setState(() => _selectedRole = role);
+                            }
+                          },
+                        ),
+                        if (_selectedRole != 'customer') ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            _selectedRole == 'cafe_admin'
+                                ? 'The Cafe Owner account is provisioned securely by the project owner.'
+                                : 'Staff and stakeholder accounts require Cafe Owner approval before sign-in.',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 16),
                         _buildField(
                           controller: _passwordController,
@@ -212,14 +315,6 @@ class _SignupScreenState extends State<SignupScreen> {
                               Navigator.pushReplacementNamed(context, '/login'),
                           child: const Text('Already have an account? Sign in'),
                         ),
-                        Text(
-                          'Staff and admin accounts are managed by the cafe.',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -238,6 +333,7 @@ class _SignupScreenState extends State<SignupScreen> {
     required String hint,
     required IconData icon,
     TextInputType? keyboardType,
+    ValueChanged<String>? onChanged,
     bool obscureText = false,
     Widget? suffix,
     String? Function(String?)? validator,
@@ -251,12 +347,16 @@ class _SignupScreenState extends State<SignupScreen> {
           controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
+          onChanged: onChanged,
           validator: validator,
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(icon),
             suffixIcon: suffix,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
       ],

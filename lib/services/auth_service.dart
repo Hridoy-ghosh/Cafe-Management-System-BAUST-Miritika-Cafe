@@ -59,7 +59,7 @@ class AuthService extends ChangeNotifier {
         email: data['email'] ?? '',
         password: '',
         role: data['role'] ?? 'customer',
-        status: 'approved',
+        status: data['status'] ?? 'pending',
         department: data['department'],
         phoneNumber: data['phone_number'],
       );
@@ -176,10 +176,11 @@ class AuthService extends ChangeNotifier {
   }
 
   // ============ SIGN IN ============
-  Future<void> signUpCafeCustomer({
+  Future<bool> signUpCafeCustomer({
     required String name,
     required String email,
     required String password,
+    required String requestedRole,
     String? phoneNumber,
   }) async {
     try {
@@ -187,17 +188,31 @@ class AuthService extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
-      await _db.auth.signUp(
+      final response = await _db.auth.signUp(
         email: email,
         password: password,
         data: {
           'full_name': name,
           'phone_number': phoneNumber,
+          'requested_role': requestedRole,
         },
       );
+      final user = response.user;
+      if (user == null) {
+        throw const AuthException('The account could not be created.');
+      }
+      if (response.session != null) {
+        await _loadUserProfile(user.id);
+        return false;
+      }
+      return true;
     } catch (e) {
-      _errorMessage = 'Account creation failed: ${e.toString()}';
+      _errorMessage = e is AuthException &&
+              e.message.toLowerCase().contains('already registered')
+          ? 'An account with this email already exists. Please sign in instead.'
+          : 'Account creation failed: ${e.toString()}';
       debugPrint('Cafe customer sign up failed: $e');
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -206,9 +221,11 @@ class AuthService extends ChangeNotifier {
 
   // ============ SIGN IN ============
   Future<void> signIn(String email, String password) async {
+    var loadingProfile = false;
     try {
       _isLoading = true;
       _errorMessage = null;
+      _currentUser = null;
       notifyListeners();
 
       final response = await _db.auth.signInWithPassword(
@@ -219,12 +236,44 @@ class AuthService extends ChangeNotifier {
       if (user == null) {
         throw const AuthException('Invalid email or password.');
       }
+      loadingProfile = true;
       await _loadUserProfile(user.id);
+      if (_currentUser?.status != 'approved') {
+        final status = _currentUser?.status;
+        await _db.auth.signOut();
+        _currentUser = null;
+        _errorMessage = status == 'rejected'
+            ? 'This account request was declined. Contact cafe management.'
+            : 'This staff account is waiting for Cafe Owner approval.';
+        return;
+      }
       notifyListeners();
       debugPrint(
           '✅ Login Successful: ${_currentUser?.name} (${_currentUser?.role}) - Dept: ${_currentUser?.department}');
+    } on AuthException catch (e) {
+      final message = e.message.toLowerCase();
+      if (message.contains('invalid login credentials')) {
+        _errorMessage = 'Incorrect email or password.';
+      } else if (message.contains('email not confirmed')) {
+        _errorMessage = 'Please confirm your email before signing in.';
+      } else {
+        _errorMessage = e.message;
+      }
+      debugPrint('Cafe sign in rejected: ${e.message}');
     } catch (e) {
-      _errorMessage = '❌ Login failed. Please try again.';
+      if (loadingProfile) {
+        _errorMessage = e is PostgrestException && e.code == 'PGRST116'
+            ? 'Your credentials were accepted, but no cafe profile was found. Apply all cafe Supabase migrations, then try again.'
+            : 'Your credentials were accepted, but your cafe profile could not be loaded. Contact the cafe admin.';
+        try {
+          await _db.auth.signOut();
+        } catch (signOutError) {
+          debugPrint('Unable to clear incomplete cafe session: $signOutError');
+        }
+      } else {
+        _errorMessage =
+            'Unable to reach cafe sign-in. Check your connection and try again.';
+      }
       debugPrint('❌ SignIn Error: $e');
     } finally {
       _isLoading = false;
